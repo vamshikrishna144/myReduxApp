@@ -1,37 +1,11 @@
-// import React from "react";
-// import {render} from "react-dom";
-//
-// import { User } from './components/User';
-// import { Main } from './components/Main';
-//
-// class App extends React.Component {
-//     constructor() {
-//         super();
-//         this.state = {
-//             username: "Vamshi"
-//         };
-//     }
-//
-//     changeUsername(newName) {
-//         this.setState({
-//             username: newName
-//         });
-//     }
-//
-//     render() {
-//         return (
-//             <div className="container">
-//                 <Main changeUsername={this.changeUsername.bind(this)}/>
-//                 <User username={this.state.username}/>
-//             </div>
-//         );
-//     }
-// }
-//
-// render(<App />, window.document.getElementById('app'));
 
+import React from "react";
+import {render} from "react-dom";
+import App from "./components/App";
+import { createStore, combineReducers, applyMiddleware } from 'redux'
+import { createLogger } from 'redux-logger';
+import {Provider} from 'react-redux';
 
-import {createStore} from 'redux'
 //store here takes initial state as the second arg, it takes in reducer/reducers as the first arg
 
 const intialState = {
@@ -40,9 +14,11 @@ const intialState = {
 }
 
 //args are passed automatically by redux
-const reducer = function(state, action) {
+const mathReducer = function(state = {
+    result: 144,
+    lastValues: []
+}, action) {
     if(!action.payload) { return state}
-    debugger;
     switch(action.type) {
         case 'add': {
             state = {
@@ -63,8 +39,44 @@ const reducer = function(state, action) {
     return state;
 }
 
+const personReducer = function(state = {
+    name: 'Vamshi',
+    age: 24
+}, action) {
+    if(!action.payload) { return state}
+    debugger;
+    switch(action.type) {
+        case 'name': {
+            state = {
+                ...state,
+                name: action.payload
+            }
+            break;
+        }
+        case 'age': {
+            state = {
+                ...state,
+                age: action.payload
+            }
+            break;
+        }
+    }
+    return state;
+}
+//Combining reducers
+const myReducers = combineReducers({mathReducer, personReducer})
 
-const store = createStore(reducer, intialState)
+//Middleware is executed right after an action is dispatched and before it reaches the reducers
+/*
+Syntax
+const myMiddleware = (store) => (next) => (action) => {}
+*/
+
+const myLoggerMiddleware = (store) => (next) => (action) => {
+    console.log("this is the action that is getting performed", action);
+    next(action);
+}
+const store = createStore(myReducers, {}, applyMiddleware(myLoggerMiddleware, createLogger()))
 
 store.subscribe(() => console.log('updated store', store.getState()))
 
@@ -80,3 +92,10 @@ store.dispatch({
     type: "add",
     payload: 2
 })
+
+store.dispatch({
+    type: "age",
+    payload: 25
+})
+
+render(<Provider store={store}><App /></Provider>, window.document.getElementById('app'));
